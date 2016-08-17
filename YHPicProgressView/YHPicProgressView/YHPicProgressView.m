@@ -19,6 +19,7 @@
     double _form;
     double _to;
     NSTimer *_timer;
+    CGFloat _lineWidth;
 }
 
 - (instancetype)initWithFrame:(CGRect)frame
@@ -27,6 +28,7 @@
     if (self) {
         self.layer.masksToBounds = YES;
         self.backgroundColor = [UIColor clearColor];
+        _lineWidth = 1;
     }
     return self;
 }
@@ -45,7 +47,7 @@
     shape.fillColor = [UIColor clearColor].CGColor;
     shape.strokeColor = [UIColor whiteColor].CGColor;
     shape.lineCap = kCALineCapButt;
-    shape.lineWidth = 1;
+    shape.lineWidth = _lineWidth;
     shape.path = path.CGPath;
     shape.strokeEnd = 1.0f;
     [self.layer addSublayer:shape];
@@ -56,7 +58,7 @@
     _progressLayer.fillColor =  [[UIColor clearColor] CGColor];
     _progressLayer.strokeColor=[UIColor redColor].CGColor;
     _progressLayer.lineCap = kCALineCapRound;
-    _progressLayer.lineWidth = 1;
+    _progressLayer.lineWidth = _lineWidth;
     _progressLayer.path = path.CGPath;
     
     //渐变图层
@@ -89,8 +91,8 @@
     UIView *view = [[UIView alloc] init];
     view.backgroundColor = self.backgroundColor;
     [self addSubview:view];
-    CGFloat vw = frame.size.width * 4 / 44.0;
-    view.frame = CGRectMake((frame.size.width - vw) / 2, frame.size.width - 1, vw, vw);
+    CGFloat vw = frame.size.width * 3 / 44.0;
+    view.frame = CGRectMake((frame.size.width - vw) / 2, frame.size.width - vw / 2, vw, vw);
 }
 
 - (UIBezierPath *)pathWithProgress:(double)progress withFrame:(CGRect)frame {
@@ -106,7 +108,7 @@
     CGPathAddPath(path, NULL, path2);
     
     left = frame.size.width * 6.5 / 44.0;
-    CGFloat radius = frame.size.width / 2;
+    CGFloat radius = frame.size.width / 2 - _lineWidth;
     double p = progress;
     if (p > 0.1) {
         p = 0.1;
@@ -116,7 +118,7 @@
     CGPathMoveToPoint(path3, NULL, left, frame.size.height);
     double startAngle = 225;
     double endAngle = startAngle + (270 - startAngle) * p;
-    CGPathAddArc(path3, NULL, radius, radius * 3, radius, degressToRadius(startAngle), degressToRadius(endAngle), false);
+    CGPathAddArc(path3, NULL, _lineWidth + radius, _lineWidth + radius * 3, radius, degressToRadius(startAngle), degressToRadius(endAngle), false);
     
     if (progress > 0.1) {
         p = progress;
@@ -127,7 +129,7 @@
         startAngle = 90;
         endAngle = startAngle + (450 - startAngle) * p;
         CGPathMoveToPoint(path3, NULL, frame.size.width / 2, radius * 2);
-        CGPathAddArc(path3, NULL, radius, radius, radius, degressToRadius(startAngle), degressToRadius(endAngle), false);
+        CGPathAddArc(path3, NULL, _lineWidth + radius, _lineWidth + radius, radius, degressToRadius(startAngle), degressToRadius(endAngle), false);
     }
     
     if (progress > 0.9) {
@@ -139,7 +141,7 @@
         startAngle = 270;
         endAngle = startAngle + (315 - startAngle) * p;
         CGPathMoveToPoint(path3, NULL, frame.size.width / 2, radius * 2);
-        CGPathAddArc(path3, NULL, radius, radius * 3, radius, degressToRadius(startAngle), degressToRadius(endAngle), false);
+        CGPathAddArc(path3, NULL, _lineWidth + radius, _lineWidth + radius * 3, radius, degressToRadius(startAngle), degressToRadius(endAngle), false);
     }
     
     CGPathAddPath(path, NULL, path3);
