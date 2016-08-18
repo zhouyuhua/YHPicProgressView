@@ -38,6 +38,7 @@
 }
 
 - (void)gradentWith:(CGRect)frame{
+    _lineWidth = frame.size.width * 2 / 44.0;
     //设置贝塞尔曲线
     UIBezierPath *path = [self pathWithProgress:1.0 withFrame:frame];
     
@@ -46,7 +47,7 @@
     shape.frame = self.bounds;
     shape.fillColor = [UIColor clearColor].CGColor;
     shape.strokeColor = [UIColor whiteColor].CGColor;
-    shape.lineCap = kCALineCapButt;
+    shape.lineCap = kCALineCapSquare;
     shape.lineWidth = _lineWidth;
     shape.path = path.CGPath;
     shape.strokeEnd = 1.0f;
@@ -57,7 +58,7 @@
     _progressLayer.frame = self.bounds;
     _progressLayer.fillColor =  [[UIColor clearColor] CGColor];
     _progressLayer.strokeColor=[UIColor redColor].CGColor;
-    _progressLayer.lineCap = kCALineCapRound;
+    _progressLayer.lineCap = kCALineCapSquare;
     _progressLayer.lineWidth = _lineWidth;
     _progressLayer.path = path.CGPath;
     
@@ -86,21 +87,16 @@
     [grain setMask:_progressLayer];
     
     [self.layer addSublayer:grain];
-    
-    // 挡住中间的重叠
-    UIView *view = [[UIView alloc] init];
-    view.backgroundColor = self.backgroundColor;
-    [self addSubview:view];
-    CGFloat vw = frame.size.width * 3 / 44.0;
-    view.frame = CGRectMake((frame.size.width - vw) / 2, frame.size.width - vw / 2, vw, vw);
 }
 
 - (UIBezierPath *)pathWithProgress:(double)progress withFrame:(CGRect)frame {
+    // 画直线
     CGMutablePathRef path = CGPathCreateMutable();
     CGFloat left = frame.size.width * 10.0 / 44.0;
     CGPathMoveToPoint(path, NULL, left, frame.size.height / 2);
     CGPathAddLineToPoint(path, NULL, left + (frame.size.width - 2 * left) * progress, frame.size.height / 2);
     
+    // 画直线下方的弧线
     CGMutablePathRef path2 = CGPathCreateMutable();
     CGPathMoveToPoint(path2, NULL, left, frame.size.height / 2);
     CGPathAddArc(path2, NULL, frame.size.width / 2, frame.size.height / 2, (frame.size.width - 2 * left) / 2, M_PI, M_PI * (1 - progress), true);
@@ -108,17 +104,19 @@
     CGPathAddPath(path, NULL, path2);
     
     left = frame.size.width * 6.5 / 44.0;
-    CGFloat radius = frame.size.width / 2 - _lineWidth;
+    CGFloat radius = (frame.size.width - _lineWidth) / 2;
     double p = progress;
     if (p > 0.1) {
         p = 0.1;
     }
     p = p / 0.1;
     CGMutablePathRef path3 = CGPathCreateMutable();
-    CGPathMoveToPoint(path3, NULL, left, frame.size.height);
-    double startAngle = 225;
-    double endAngle = startAngle + (270 - startAngle) * p;
-    CGPathAddArc(path3, NULL, _lineWidth + radius, _lineWidth + radius * 3, radius, degressToRadius(startAngle), degressToRadius(endAngle), false);
+    CGPathMoveToPoint(path3, NULL, left, frame.size.height + _lineWidth);
+    double pa = asin(frame.size.width * 10 / 44.0 / 2 / radius);
+    double startAngle = M_PI_4 * 4;
+    double endAngle = startAngle + (M_PI_4 * 6 - pa - startAngle) * p;
+    // 画左下的弧线
+    CGPathAddArc(path3, NULL, _lineWidth + radius, _lineWidth / 2 + radius * 3, radius, (startAngle), (endAngle), false);
     
     if (progress > 0.1) {
         p = progress;
@@ -126,10 +124,11 @@
             p = 0.9;
         }
         p = (p - 0.1) / 0.8;
-        startAngle = 90;
-        endAngle = startAngle + (450 - startAngle) * p;
-        CGPathMoveToPoint(path3, NULL, frame.size.width / 2, radius * 2);
-        CGPathAddArc(path3, NULL, _lineWidth + radius, _lineWidth + radius, radius, degressToRadius(startAngle), degressToRadius(endAngle), false);
+        startAngle = degressToRadius(90) + pa;
+        endAngle = startAngle + (degressToRadius(450) - pa - startAngle) * p;
+//        CGPathMoveToPoint(path3, NULL, frame.size.width / 2 - frame.size.width * 2 / 44.0, _lineWidth + radius * 2);
+        // 画上方的圆
+        CGPathAddArc(path3, NULL, _lineWidth / 2 + radius, _lineWidth / 2 + radius, radius, (startAngle), (endAngle), false);
     }
     
     if (progress > 0.9) {
@@ -138,10 +137,11 @@
             p = 1;
         }
         p = (p - 0.9) / 0.1;
-        startAngle = 270;
-        endAngle = startAngle + (315 - startAngle) * p;
-        CGPathMoveToPoint(path3, NULL, frame.size.width / 2, radius * 2);
-        CGPathAddArc(path3, NULL, _lineWidth + radius, _lineWidth + radius * 3, radius, degressToRadius(startAngle), degressToRadius(endAngle), false);
+        startAngle = degressToRadius(270) + pa;
+        endAngle = startAngle + (degressToRadius(360) - startAngle) * p;
+//        CGPathMoveToPoint(path3, NULL, frame.size.width / 2 + frame.size.width * 2 / 44.0, _lineWidth + radius * 2);
+        // 画右下的弧线
+        CGPathAddArc(path3, NULL, _lineWidth + radius, _lineWidth / 2 + radius * 3, radius, (startAngle), (endAngle), false);
     }
     
     CGPathAddPath(path, NULL, path3);
